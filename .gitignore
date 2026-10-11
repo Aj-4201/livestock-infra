@@ -1,6 +1,7 @@
 # Secrets / local config
 .env
 .env.*
+!.env.example
 
 # Data (volumes are named, but guard against accidental dumps)
 *.sql.gz
