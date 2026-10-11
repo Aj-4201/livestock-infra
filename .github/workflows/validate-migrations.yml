@@ -1,0 +1,59 @@
+name: validate-migrations
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: livestock
+          POSTGRES_PASSWORD: livestock_ci
+          POSTGRES_DB: livestock
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U livestock"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Checkout infra
+        uses: actions/checkout@v4
+
+      - name: Install dbmate
+        run: |
+          curl -fsSL -o /usr/local/bin/dbmate \
+            https://github.com/amacneil/dbmate/releases/latest/download/dbmate-linux-amd64
+          chmod +x /usr/local/bin/dbmate
+
+      - name: Checkout schema repo
+        uses: actions/checkout@v4
+        with:
+          repository: bella-thehacker/livestock-db
+          path: livestock-db
+
+      - name: Apply migrations
+        env:
+          DATABASE_URL: postgres://livestock:livestock_ci@localhost:5432/livestock?sslmode=disable
+        run: dbmate --migrations-dir livestock-db/migrations up
+
+      - name: Checkout seed repo
+        uses: actions/checkout@v4
+        with:
+          repository: bella-thehacker/livestock-seed
+          path: livestock-seed
+
+      - name: Load seed data
+        env:
+          PGPASSWORD: livestock_ci
+        run: |
+          for f in livestock-seed/seed/*.sql; do
+            echo ">> $f"
+            psql -h localhost -U livestock -d livestock -f "$f"
+          done

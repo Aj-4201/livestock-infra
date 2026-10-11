@@ -1,0 +1,12 @@
+# Secrets / local config
+.env
+.env.*
+
+# Data (volumes are named, but guard against accidental dumps)
+*.sql.gz
+backups/
+*.dump
+
+.DS_Store
+.idea/
+.vscode/
