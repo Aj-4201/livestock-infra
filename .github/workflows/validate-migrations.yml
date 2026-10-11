@@ -35,7 +35,7 @@ jobs:
       - name: Checkout schema repo
         uses: actions/checkout@v4
         with:
-          repository: bella-thehacker/livestock-db
+          repository: ${{ github.repository_owner }}/livestock-db
           path: livestock-db
 
       - name: Apply migrations
@@ -46,7 +46,7 @@ jobs:
       - name: Checkout seed repo
         uses: actions/checkout@v4
         with:
-          repository: bella-thehacker/livestock-seed
+          repository: ${{ github.repository_owner }}/livestock-seed
           path: livestock-seed
 
       - name: Load seed data
@@ -55,5 +55,5 @@ jobs:
         run: |
           for f in livestock-seed/seed/*.sql; do
             echo ">> $f"
-            psql -h localhost -U livestock -d livestock -f "$f"
+            psql -h localhost -U livestock -d livestock -v ON_ERROR_STOP=1 -f "$f"
           done
